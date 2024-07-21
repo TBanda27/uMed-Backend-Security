@@ -13,14 +13,22 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/v1")
 @Slf4j
 public class UsersController {
     private final UserService userService;
 
-    @GetMapping()
+    @GetMapping("/users")
     public ResponseEntity<List<UserResultDto>> getUsers(){
         log.info("Request to get all users: ");
         return ResponseEntity.ok(userService.findAllUsers());
+    }
+
+
+
+    @GetMapping("/home")
+    public ResponseEntity<String> home(){
+        log.info("Request to visit the home page: ");
+        return ResponseEntity.ok("This is the homepage of uMed Backend Security System");
     }
 }

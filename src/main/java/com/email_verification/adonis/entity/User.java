@@ -33,4 +33,8 @@ public class User {
     private boolean isEnabled = false;
 
 
+    // Fields for OAuth
+    private String provider;
+
+    private String providerId;
 }

@@ -2,16 +2,21 @@ package com.email_verification.adonis.registration;
 
 import com.email_verification.adonis.repository.UserRepository;
 import com.email_verification.adonis.repository.UserResetPasswordTokenRepository;
+import com.email_verification.adonis.service.CustomOAuth2UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.stereotype.Service;
 
 
@@ -20,6 +25,7 @@ import org.springframework.stereotype.Service;
 public class UserRegistrationDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -39,6 +45,12 @@ public class UserRegistrationDetailsService implements UserDetailsService {
                 .logout(logout -> logout
                         .logoutUrl("/perform-logout")
                         .logoutSuccessUrl("/login?logout=true")
+                        .logoutSuccessHandler(new LogoutSuccessHandler() {
+                            @Override
+                            public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+                                request.getSession().invalidate();
+                            }
+                        })
                         .deleteCookies("JSESSIONID")
                         .permitAll())
                 .authorizeHttpRequests(authorize -> authorize
@@ -56,7 +68,11 @@ public class UserRegistrationDetailsService implements UserDetailsService {
                         .permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
-                .oauth2Login(Customizer.withDefaults())
+//                .oauth2Login(Customizer.withDefaults())
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService))
+                )
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
                 .build();
